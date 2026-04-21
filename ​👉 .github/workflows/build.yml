@@ -1,4 +1,4 @@
-name: AUTO BUILD APK
+name: AUTO BUILD APK v1.8
 
 on:
   push:
@@ -41,8 +41,8 @@ jobs:
                   applicationId "com.example.app"
                   minSdk 23
                   targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
+                  versionCode 8
+                  versionName "1.8"
               }
           }
           dependencies {
@@ -52,7 +52,7 @@ jobs:
 
           cat <<EOF > app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <application android:label="AudioAI Auto">
+              <application android:label="Audio AI v1.8">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
@@ -65,20 +65,83 @@ jobs:
 
           cat <<EOF > app/src/main/java/com/example/app/MainActivity.java
           package com.example.app;
+
           import android.app.Activity;
+          import android.os.Build;
           import android.os.Bundle;
+          import android.view.View;
+          import android.view.ViewGroup;
+          import android.widget.Button;
+          import android.widget.LinearLayout;
           import android.widget.TextView;
-          import android.view.Gravity;
 
           public class MainActivity extends Activity {
+              private TextView statusView;
+
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
-                  TextView t = new TextView(this);
-                  t.setText("DAY CHUYEN TU DONG: OK\nCHUC MUNG MINH CHU!");
-                  t.setTextSize(25);
-                  t.setGravity(Gravity.CENTER);
-                  setContentView(t);
+
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setPadding(48, 48, 48, 48);
+
+                  TextView title = new TextView(this);
+                  title.setText("Audio AI v1.8");
+                  title.setTextSize(28f);
+                  title.setAccessibilityHeading(true);
+                  title.setContentDescription("Audio AI phiên bản 1 chấm 8");
+
+                  TextView helper = new TextView(this);
+                  helper.setText("Chọn nhanh giọng ElevenLabs:");
+                  helper.setTextSize(18f);
+
+                  statusView = new TextView(this);
+                  statusView.setTextSize(20f);
+                  statusView.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+
+                  LinearLayout buttonGroup = new LinearLayout(this);
+                  buttonGroup.setOrientation(LinearLayout.VERTICAL);
+
+                  addVoiceButton(buttonGroup, "Rachel", "Nữ miền Bắc");
+                  addVoiceButton(buttonGroup, "Adam", "Nam trung tính");
+                  addVoiceButton(buttonGroup, "Bella", "Nữ truyền cảm");
+
+                  root.addView(title);
+                  root.addView(helper);
+                  root.addView(statusView);
+                  root.addView(buttonGroup);
+
+                  setContentView(root);
+                  updateSelectedVoice("Rachel");
+              }
+
+              private void addVoiceButton(LinearLayout container, final String voiceName, String voiceHint) {
+                  Button button = new Button(this);
+                  button.setText(voiceName + " - " + voiceHint);
+                  button.setAllCaps(false);
+                  button.setContentDescription(
+                      "Giọng ElevenLabs " + voiceName + ". " + voiceHint + ". Nhấn đúp để chọn."
+                  );
+                  button.setLayoutParams(new LinearLayout.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT,
+                      ViewGroup.LayoutParams.WRAP_CONTENT
+                  ));
+                  button.setOnClickListener(new View.OnClickListener() {
+                      @Override
+                      public void onClick(View v) {
+                          updateSelectedVoice(voiceName);
+                      }
+                  });
+                  container.addView(button);
+              }
+
+              private void updateSelectedVoice(String voiceName) {
+                  statusView.setText("Đang dùng giọng ElevenLabs: " + voiceName);
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                      statusView.setStateDescription("Đã chọn giọng " + voiceName);
+                  }
+                  statusView.announceForAccessibility("Đã chọn giọng ElevenLabs " + voiceName);
               }
           }
           EOF
@@ -94,6 +157,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: app-debug-v1-8
           path: app/build/outputs/apk/debug/app-debug.apk
-
